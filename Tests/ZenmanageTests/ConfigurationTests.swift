@@ -8,7 +8,7 @@ final class ConfigurationTests: XCTestCase {
 
     func testRejectsNonMobileEnvironmentToken() {
         XCTAssertThrowsError(try ZenmanageConfiguration(environmentToken: "cli_live_123")) { error in
-            XCTAssertEqual(error as? ZenmanageError, .configuration("Invalid environment token for iOS runtime. Use a mobile key (mob_...)."))
+            XCTAssertEqual(error as? ZenmanageError, .configuration("Invalid environment token for iOS runtime. Use a mobile key (mob_...) or server key (srv_...)."))
         }
     }
 
