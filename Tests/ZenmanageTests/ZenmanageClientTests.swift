@@ -88,7 +88,7 @@ final class ZenmanageClientTests: XCTestCase {
         URLProtocolMock.requestObserver = { request in
             if request.url?.path == "/v1/flags/new-ui/usage" {
                 XCTAssertEqual(request.httpMethod, "POST")
-                XCTAssertNotNil(request.value(forHTTPHeaderField: "X-ZENMANAGE-CONTEXT"))
+                XCTAssertNotNil(request.value(forHTTPHeaderField: "X-ZEN-CONTEXT"))
                 usageExpectation.fulfill()
             }
         }
@@ -118,7 +118,7 @@ final class ZenmanageClientTests: XCTestCase {
         URLProtocolMock.requestObserver = { request in
             if request.url?.path == "/v1/flags/missing-flag/usage" {
                 XCTAssertEqual(request.httpMethod, "POST")
-                XCTAssertEqual(request.value(forHTTPHeaderField: "X-DEFAULT-VALUE"), "{\"missing-flag\":true}")
+                XCTAssertEqual(request.value(forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE"), "{\"missing-flag\":true}")
                 usageExpectation.fulfill()
             }
         }
@@ -147,7 +147,7 @@ final class ZenmanageClientTests: XCTestCase {
 
         URLProtocolMock.requestObserver = { request in
             if request.url?.path == "/v1/flags/fallback-flag/usage" {
-                XCTAssertEqual(request.value(forHTTPHeaderField: "X-DEFAULT-VALUE"), "{\"fallback-flag\":\"control\"}")
+                XCTAssertEqual(request.value(forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE"), "{\"fallback-flag\":\"control\"}")
                 usageExpectation.fulfill()
             }
         }
@@ -177,7 +177,7 @@ final class ZenmanageClientTests: XCTestCase {
 
         URLProtocolMock.requestObserver = { request in
             if request.url?.path == "/v1/flags/num-flag/usage" {
-                XCTAssertEqual(request.value(forHTTPHeaderField: "X-DEFAULT-VALUE"), "{\"num-flag\":42}")
+                XCTAssertEqual(request.value(forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE"), "{\"num-flag\":42}")
                 usageExpectation.fulfill()
             }
         }
@@ -206,7 +206,7 @@ final class ZenmanageClientTests: XCTestCase {
 
         URLProtocolMock.requestObserver = { request in
             if request.url?.path == "/v1/flags/new-ui/usage" {
-                XCTAssertNil(request.value(forHTTPHeaderField: "X-DEFAULT-VALUE"))
+                XCTAssertNil(request.value(forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE"))
                 usageExpectation.fulfill()
             }
         }
