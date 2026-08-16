@@ -82,13 +82,13 @@ final class APIClient {
 
         if let context, !context.isAnonymousWithoutData {
             let encoder = JSONEncoder()
-            request.setValue(String(data: try encoder.encode(context), encoding: .utf8), forHTTPHeaderField: "X-ZENMANAGE-CONTEXT")
+            request.setValue(String(data: try encoder.encode(context), encoding: .utf8), forHTTPHeaderField: "X-ZEN-CONTEXT")
         }
 
         if let defaultValue {
             do {
                 let payload = try JSONEncoder().encode([key: defaultValue])
-                request.setValue(String(data: payload, encoding: .utf8), forHTTPHeaderField: "X-DEFAULT-VALUE")
+                request.setValue(String(data: payload, encoding: .utf8), forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE")
             } catch {
                 logger.debug("Failed to encode usage default value", metadata: ["key": key, "error": error.localizedDescription])
             }
@@ -115,7 +115,7 @@ final class APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue(environmentToken, forHTTPHeaderField: "X-API-Key")
+        request.setValue(environmentToken, forHTTPHeaderField: "X-ZEN-API-KEY")
         request.setValue("\(clientAgent)/\(Self.sdkVersion)", forHTTPHeaderField: "X-ZEN-CLIENT-AGENT")
 
         if includeContentType {
