@@ -67,7 +67,7 @@ public final class FlagManager {
         let flags = try await ensureRulesLoaded()
 
         if let flag = flags.first(where: { $0.key == key }) {
-            apiClient.reportUsage(key: key, context: usageContext())
+            apiClient.reportUsage(key: key, context: usageContext(), defaultValue: resolveEffectiveDefault(key: key, defaultValue: defaultValue))
             return try evaluateFlag(flag)
         }
 
@@ -146,6 +146,12 @@ public final class FlagManager {
 
     private func usageContext() -> Context? {
         context.isAnonymousWithoutData ? nil : context
+    }
+
+    /// Resolves the default value that should be reported for usage tracking:
+    /// the inline parameter if provided, otherwise a `DefaultsCollection` entry.
+    private func resolveEffectiveDefault(key: String, defaultValue: FlagValue?) -> FlagValue? {
+        defaultValue ?? defaults.get(key)
     }
 
     private func ensureRulesLoaded() async throws -> [Flag] {

@@ -229,6 +229,63 @@ final class ZenmanageClientTests: XCTestCase {
         await fulfillment(of: [usageExpectation], timeout: 2.0)
     }
 
+    func testReportsUsageWithInlineDefaultValueHeaderWhenFlagFound() async throws {
+        let usageExpectation = expectation(description: "Usage reported with inline default value for found flag")
+
+        URLProtocolMock.requestObserver = { request in
+            if request.url?.path == "/v1/flags/new-ui/usage" {
+                XCTAssertEqual(request.value(forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE"), "{\"new-ui\":false}")
+                usageExpectation.fulfill()
+            }
+        }
+
+        URLProtocolMock.requestHandler = { request in
+            if request.url?.host == "api.zenmanage.com", request.url?.path == "/v1/flag-json" {
+                return (makeHTTPResponse(url: request.url!), makeMetadataResponseJSON())
+            }
+
+            if request.url?.host == "cdn.example.com" {
+                return (makeHTTPResponse(url: request.url!), makeRulesResponseJSON())
+            }
+
+            return (makeHTTPResponse(url: request.url!), Data())
+        }
+
+        let sdk = Zenmanage(configuration: try makeConfiguration(enableUsageReporting: true))
+        _ = try await sdk.flags().single("new-ui", defaultValue: false)
+
+        await fulfillment(of: [usageExpectation], timeout: 2.0)
+    }
+
+    func testReportsUsageWithDefaultsCollectionValueHeaderWhenFlagFound() async throws {
+        let usageExpectation = expectation(description: "Usage reported with defaults-collection value for found flag")
+
+        URLProtocolMock.requestObserver = { request in
+            if request.url?.path == "/v1/flags/checkout-flow/usage" {
+                XCTAssertEqual(request.value(forHTTPHeaderField: "X-ZEN-DEFAULT-VALUE"), "{\"checkout-flow\":\"control\"}")
+                usageExpectation.fulfill()
+            }
+        }
+
+        URLProtocolMock.requestHandler = { request in
+            if request.url?.host == "api.zenmanage.com", request.url?.path == "/v1/flag-json" {
+                return (makeHTTPResponse(url: request.url!), makeMetadataResponseJSON())
+            }
+
+            if request.url?.host == "cdn.example.com" {
+                return (makeHTTPResponse(url: request.url!), makeRulesResponseJSON())
+            }
+
+            return (makeHTTPResponse(url: request.url!), Data())
+        }
+
+        let defaults = DefaultsCollection().set("checkout-flow", string: "control")
+        let sdk = Zenmanage(configuration: try makeConfiguration(enableUsageReporting: true))
+        _ = try await sdk.flags().withDefaults(defaults).single("checkout-flow")
+
+        await fulfillment(of: [usageExpectation], timeout: 2.0)
+    }
+
     func testObjectiveCWrapperInitializes() throws {
         XCTAssertNoThrow(try ObjCZenmanage(environmentToken: "mob_test_key"))
     }
