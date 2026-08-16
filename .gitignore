@@ -1,0 +1,7 @@
+.build/
+DerivedData/
+Packages/
+Package.resolved
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata/
