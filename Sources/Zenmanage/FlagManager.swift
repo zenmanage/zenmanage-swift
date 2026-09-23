@@ -57,16 +57,25 @@ public final class FlagManager {
     }
 
     /// Returns all fetched flags evaluated against the current context.
+    ///
+    /// Flags whose type wasn't recognized by this SDK release (e.g. a json flag served
+    /// to an SDK that predates json flag support) are omitted rather than returned with
+    /// an unusable value.
     public func all() async throws -> [Flag] {
         let flags = try await ensureRulesLoaded()
-        return try flags.map(evaluateFlag)
+        return try flags.filter { !$0.isUnknownType }.map(evaluateFlag)
     }
 
     /// Returns a single flag by key.
+    ///
+    /// A flag whose type wasn't recognized by this SDK release (e.g. a json flag served
+    /// to an SDK that predates json flag support) is treated the same as a flag that
+    /// wasn't found: it falls back to `defaultValue`, then the `DefaultsCollection`, then
+    /// throws.
     public func single(_ key: String, defaultValue: FlagValue? = nil) async throws -> Flag {
         let flags = try await ensureRulesLoaded()
 
-        if let flag = flags.first(where: { $0.key == key }) {
+        if let flag = flags.first(where: { $0.key == key && !$0.isUnknownType }) {
             apiClient.reportUsage(key: key, context: usageContext(), defaultValue: resolveEffectiveDefault(key: key, defaultValue: defaultValue))
             return try evaluateFlag(flag)
         }
@@ -191,7 +200,9 @@ public final class FlagManager {
             throw ZenmanageError.cache("Cached rules are not valid UTF-8")
         }
 
-        return try JSONDecoder().decode(RulesEnvelope.self, from: data).flags
+        let decoder = JSONDecoder()
+        decoder.userInfo[.zenmanageLogger] = logger
+        return try decoder.decode(RulesEnvelope.self, from: data).flags
     }
 
     private func evaluateFlag(_ flag: Flag) throws -> Flag {
@@ -235,6 +246,8 @@ public final class FlagManager {
             type = .string
         case .number:
             type = .number
+        case .unknown:
+            type = .unknown
         }
 
         return Flag(
