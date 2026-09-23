@@ -147,6 +147,85 @@ func makeRulesResponseJSON() -> Data {
     return Data(json.utf8)
 }
 
+/// A rules payload that mirrors `makeRulesResponseJSON()` but also includes a flag with
+/// an unrecognized `"json"` type and a value wrapper the SDK doesn't understand yet
+/// (`{"json": ...}`), simulating what the API will send once json flags exist. Used to
+/// verify an unrecognized flag degrades safely instead of throwing away the payload.
+func makeRulesResponseJSONWithUnknownFlag() -> Data {
+    let json = """
+    {
+      "version": "1",
+      "flags": [
+        {
+          "version": "1",
+          "type": "boolean",
+          "key": "new-ui",
+          "name": "New UI",
+          "target": {
+            "version": "1",
+            "value": {
+              "version": "1",
+              "value": {
+                "boolean": true
+              }
+            }
+          }
+        },
+        {
+          "version": "2",
+          "type": "string",
+          "key": "checkout-flow",
+          "name": "Checkout Flow",
+          "target": {
+            "version": "2",
+            "value": {
+              "version": "2",
+              "value": {
+                "string": "control"
+              }
+            }
+          }
+        },
+        {
+          "version": "3",
+          "type": "number",
+          "key": "max-items",
+          "name": "Max Items",
+          "target": {
+            "version": "3",
+            "value": {
+              "version": "3",
+              "value": {
+                "number": 10
+              }
+            }
+          }
+        },
+        {
+          "version": "4",
+          "type": "json",
+          "key": "advanced-config",
+          "name": "Advanced Config",
+          "target": {
+            "version": "4",
+            "value": {
+              "version": "4",
+              "value": {
+                "json": {
+                  "retries": 3,
+                  "endpoints": ["a", "b"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+    """
+
+    return Data(json.utf8)
+}
+
 func makeMetadataResponseJSON() -> Data {
     let json = """
     {

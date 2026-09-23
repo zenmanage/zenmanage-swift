@@ -17,3 +17,10 @@ public struct NullLogger: ZenmanageLogger {
     public func warn(_ message: String, metadata: [String: String]? = nil) {}
     public func error(_ message: String, metadata: [String: String]? = nil) {}
 }
+
+extension CodingUserInfoKey {
+    /// Carries the configured `ZenmanageLogger` into `Decodable` initializers (via
+    /// `JSONDecoder.userInfo`) so decode-time fallbacks, such as an unrecognized flag
+    /// type or value, can be logged once instead of silently swallowed.
+    static let zenmanageLogger = CodingUserInfoKey(rawValue: "com.zenmanage.swift.logger")!
+}

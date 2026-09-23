@@ -1,17 +1,49 @@
 import Foundation
 
 /// The supported Zenmanage flag types.
+///
+/// `unknown` covers any flag type the running SDK doesn't recognize yet (for example a
+/// `json` flag served to an SDK release that predates json flag support). It decodes
+/// without throwing so one unrecognized flag never drops the whole rules payload; flag
+/// lookup treats a flag with this type the same as a flag that wasn't found at all.
 public enum FlagType: String, Codable, Hashable, Sendable {
     case boolean
     case string
     case number
+    case unknown
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+
+        if let knownType = FlagType(rawValue: rawValue) {
+            self = knownType
+        } else {
+            self = .unknown
+            Self.logUnrecognized(rawValue, decoder: decoder)
+        }
+    }
+
+    private static func logUnrecognized(_ rawValue: String, decoder: Decoder) {
+        (decoder.userInfo[.zenmanageLogger] as? any ZenmanageLogger)?.warn(
+            "Unrecognized flag type; treating flag as unknown so the rest of the payload keeps evaluating",
+            metadata: ["type": rawValue]
+        )
+    }
 }
 
 /// A typed flag value returned by Zenmanage.
+///
+/// `unknown` is the sentinel used when the value payload doesn't match any recognized
+/// shape (for example a json flag's `{"json": ...}` wrapper, served to an SDK release
+/// that predates json flag support). It decodes without throwing; evaluation treats a
+/// flag whose value is `unknown` the same as a missing flag and falls back to the
+/// caller-supplied default.
 public enum FlagValue: Hashable, Sendable, Codable {
     case boolean(Bool)
     case string(String)
     case number(Double)
+    case unknown
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -31,9 +63,10 @@ public enum FlagValue: Hashable, Sendable, Codable {
             return
         }
 
-        throw DecodingError.typeMismatch(
-            FlagValue.self,
-            DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Unsupported flag value")
+        self = .unknown
+        (decoder.userInfo[.zenmanageLogger] as? any ZenmanageLogger)?.warn(
+            "Unrecognized flag value; treating value as unknown so the rest of the payload keeps evaluating",
+            metadata: nil
         )
     }
 
@@ -47,6 +80,8 @@ public enum FlagValue: Hashable, Sendable, Codable {
             try container.encode(value)
         case let .number(value):
             try container.encode(value)
+        case .unknown:
+            try container.encodeNil()
         }
     }
 
@@ -58,6 +93,8 @@ public enum FlagValue: Hashable, Sendable, Codable {
             return !value.isEmpty && value.lowercased() != "false" && value != "0"
         case let .number(value):
             return value != 0
+        case .unknown:
+            return false
         }
     }
 
@@ -72,6 +109,8 @@ public enum FlagValue: Hashable, Sendable, Codable {
                 return String(Int(value))
             }
             return String(value)
+        case .unknown:
+            return ""
         }
     }
 
@@ -83,6 +122,8 @@ public enum FlagValue: Hashable, Sendable, Codable {
             return Double(value) ?? 0
         case let .number(value):
             return value
+        case .unknown:
+            return 0
         }
     }
 }
@@ -428,6 +469,13 @@ public struct Flag: Codable, Hashable, Sendable {
         target.value
     }
 
+    /// True when this flag's type wasn't recognized by this SDK release (for example a
+    /// json flag served to an SDK that predates json flag support). Flag lookup treats
+    /// such a flag the same as one that wasn't found, falling back to the caller's default.
+    var isUnknownType: Bool {
+        type == .unknown
+    }
+
     public func isEnabled() -> Bool {
         guard type == .boolean else {
             return false
@@ -611,6 +659,33 @@ private struct APITypedValue: Codable {
     let string: String?
     let number: Double?
 
+    private enum CodingKeys: String, CodingKey {
+        case boolean
+        case string
+        case number
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        boolean = try container.decodeIfPresent(Bool.self, forKey: .boolean)
+        string = try container.decodeIfPresent(String.self, forKey: .string)
+        number = try container.decodeIfPresent(Double.self, forKey: .number)
+
+        // If none of the recognized keys were present (e.g. a json flag's
+        // `{"json": ...}` wrapper), `flagValue` below falls back to `.unknown`. Unknown
+        // keys are otherwise ignored by keyed decoding, so this is the only signal we
+        // get that the wrapper didn't match a known flag value shape. This isn't logged
+        // here to avoid double-logging: an unrecognized value wrapper always accompanies
+        // an unrecognized `FlagType`, whose own `init(from:)` already logs it once.
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(boolean, forKey: .boolean)
+        try container.encodeIfPresent(string, forKey: .string)
+        try container.encodeIfPresent(number, forKey: .number)
+    }
+
     var flagValue: FlagValue {
         if let boolean {
             return .boolean(boolean)
@@ -624,6 +699,6 @@ private struct APITypedValue: Codable {
             return .number(number)
         }
 
-        return .string("")
+        return .unknown
     }
 }

@@ -30,6 +30,7 @@ final class APIClient {
         logger = configuration.logger
         urlSession = configuration.urlSession
         clientAgent = configuration.clientAgent ?? Self.defaultClientAgent
+        decoder.userInfo[.zenmanageLogger] = logger
     }
 
     func getRules() async throws -> RulesEnvelope {
