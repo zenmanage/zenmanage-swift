@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for `json`-typed flags: `Flag.asJson()` returns the decoded value as a new `JSONValue` type (`.object`/`.array`/`.string`/`.number`/`.boolean`/`.null`), matching the "own type only, safe fallback otherwise" coercion behavior of `asBool()`/`asString()`/`asNumber()`. `JSONValue` conforms to `ExpressibleByDictionaryLiteral`/`ExpressibleByArrayLiteral`/etc. so Swift dictionary and array literals can be used directly. A Dictionary or Array default passed to `single(key, defaultValue:)` or `DefaultsCollection.set(_:json:)` now synthesizes a `json`-typed flag instead of being coerced to a string.
 
 ### Fixed
+- `FlagManager.single()` now falls back to the caller-provided default (or a `DefaultsCollection` entry) instead of throwing when the rules fetch fails outright, e.g. an invalid or unreachable environment token. This mirrors the reference PHP SDK's behavior. An explicit `refreshRules()` call still surfaces its own failure.
 - Flags with an unrecognized `type` (or an unrecognized value wrapper) no longer fail to decode. Previously, one flag of an unrecognized type could throw away the entire rules payload; now that flag is treated as unknown, logged once, and evaluates to the caller's default like a missing flag. This shipped ahead of `json`-type flag support above.
 
 ### Changed
