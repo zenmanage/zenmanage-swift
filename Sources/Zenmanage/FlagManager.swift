@@ -72,8 +72,12 @@ public final class FlagManager {
     /// to an SDK that predates json flag support) is treated the same as a flag that
     /// wasn't found: it falls back to `defaultValue`, then the `DefaultsCollection`, then
     /// throws.
+    ///
+    /// If loading rules fails outright (e.g. an invalid or unreachable environment token),
+    /// this falls back the same way, rather than propagating the error — the caller should
+    /// still get a usable value when one was provided.
     public func single(_ key: String, defaultValue: FlagValue? = nil) async throws -> Flag {
-        let flags = try await ensureRulesLoaded()
+        let flags = await loadFlagsOrFallBackToDefaults()
 
         if let flag = flags.first(where: { $0.key == key && !$0.isUnknownType }) {
             apiClient.reportUsage(key: key, context: usageContext(), defaultValue: resolveEffectiveDefault(key: key, defaultValue: defaultValue))
@@ -173,6 +177,18 @@ public final class FlagManager {
     /// the inline parameter if provided, otherwise a `DefaultsCollection` entry.
     private func resolveEffectiveDefault(key: String, defaultValue: FlagValue?) -> FlagValue? {
         defaultValue ?? defaults.get(key)
+    }
+
+    /// Loads the current flag set, falling back to an empty array (so callers fall
+    /// through to their own default handling) if rule-loading fails outright — e.g. an
+    /// invalid or unreachable environment token.
+    private func loadFlagsOrFallBackToDefaults() async -> [Flag] {
+        do {
+            return try await ensureRulesLoaded()
+        } catch {
+            logger.warn("Failed to load rules, falling back to configured defaults", metadata: ["error": error.localizedDescription])
+            return []
+        }
     }
 
     private func ensureRulesLoaded() async throws -> [Flag] {
