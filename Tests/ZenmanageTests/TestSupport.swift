@@ -148,9 +148,9 @@ func makeRulesResponseJSON() -> Data {
 }
 
 /// A rules payload that mirrors `makeRulesResponseJSON()` but also includes a flag with
-/// an unrecognized `"json"` type and a value wrapper the SDK doesn't understand yet
-/// (`{"json": ...}`), simulating what the API will send once json flags exist. Used to
-/// verify an unrecognized flag degrades safely instead of throwing away the payload.
+/// an unrecognized `"enum"` type and a value wrapper the SDK doesn't understand yet
+/// (`{"enum": ...}`), simulating what the API will send once a future flag type exists.
+/// Used to verify an unrecognized flag degrades safely instead of throwing away the payload.
 func makeRulesResponseJSONWithUnknownFlag() -> Data {
     let json = """
     {
@@ -203,7 +203,7 @@ func makeRulesResponseJSONWithUnknownFlag() -> Data {
         },
         {
           "version": "4",
-          "type": "json",
+          "type": "enum",
           "key": "advanced-config",
           "name": "Advanced Config",
           "target": {
@@ -211,10 +211,85 @@ func makeRulesResponseJSONWithUnknownFlag() -> Data {
             "value": {
               "version": "4",
               "value": {
+                "enum": "variant-a"
+              }
+            }
+          }
+        }
+      ]
+    }
+    """
+
+    return Data(json.utf8)
+}
+
+/// A rules payload that mirrors `makeRulesResponseJSON()` but also includes a `json`-typed
+/// flag whose value is a JSON object, and one whose value is a JSON array. Used to verify
+/// json flags decode and evaluate alongside boolean/string/number flags in the same payload.
+func makeRulesResponseJSONWithJsonFlags() -> Data {
+    let json = """
+    {
+      "version": "1",
+      "flags": [
+        {
+          "version": "1",
+          "type": "boolean",
+          "key": "new-ui",
+          "name": "New UI",
+          "target": {
+            "version": "1",
+            "value": {
+              "version": "1",
+              "value": {
+                "boolean": true
+              }
+            }
+          }
+        },
+        {
+          "version": "2",
+          "type": "string",
+          "key": "checkout-flow",
+          "name": "Checkout Flow",
+          "target": {
+            "version": "2",
+            "value": {
+              "version": "2",
+              "value": {
+                "string": "control"
+              }
+            }
+          }
+        },
+        {
+          "version": "3",
+          "type": "json",
+          "key": "advanced-config",
+          "name": "Advanced Config",
+          "target": {
+            "version": "3",
+            "value": {
+              "version": "3",
+              "value": {
                 "json": {
                   "retries": 3,
                   "endpoints": ["a", "b"]
                 }
+              }
+            }
+          }
+        },
+        {
+          "version": "4",
+          "type": "json",
+          "key": "allowed-regions",
+          "name": "Allowed Regions",
+          "target": {
+            "version": "4",
+            "value": {
+              "version": "4",
+              "value": {
+                "json": ["us", "ca", "gb"]
               }
             }
           }

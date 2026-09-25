@@ -143,10 +143,34 @@ let defaults = DefaultsCollection()
     .set("new-ui", bool: true)
     .set("checkout-variant", string: "control")
     .set("page-size", int: 20)
+    .set("advanced-config", json: ["retries": 3, "timeout-ms": 5000])
 
 let manager = sdk.flags().withDefaults(defaults)
 let pageSize = try await manager.single("page-size").asNumber()
+
+// A Dictionary or Array default (or an explicit `JSONValue`) synthesizes a `json`-typed
+// flag rather than being coerced to a string.
+let config = try await manager.single("advanced-config", defaultValue: ["retries": 3]).asJson()
 ```
+
+## Value Types & Cross-Type Coercion
+
+A flag's `type` is one of `boolean`, `string`, `number`, or `json`. Each type has a matching accessor (`asBool()`, `asString()`, `asNumber()`, `asJson()`), plus `isEnabled()` for boolean flags specifically. This is the reference other Zenmanage SDKs mirror, so the rules below are intentionally exact — not just "reasonable defaults."
+
+**`asJson()`** returns the decoded value as a `JSONValue`, this SDK's minimal representation of an arbitrary JSON value (`.object([String: JSONValue])`, `.array([JSONValue])`, `.string`, `.number`, `.boolean`, `.null`). Both JSON objects (`{"a": 1}`) and JSON arrays (`[1, 2, 3]`) decode to their matching `JSONValue` case. `JSONValue` also conforms to `ExpressibleByDictionaryLiteral`/`ExpressibleByArrayLiteral`/`ExpressibleByStringLiteral`/etc., so Swift dictionary and array literals (like the `advanced-config` example above) can be passed anywhere a `JSONValue` is expected without spelling out the enum case.
+
+**Calling the "wrong" accessor for a flag's type never throws.** Each accessor only recognizes its own value wrapper (`{"boolean": …}`, `{"string": …}`, `{"number": …}`, `{"json": …}`) and falls back to a safe zero value for every other type — it never attempts a lossy conversion between types:
+
+| Called on →<br>Flag type ↓ | `asBool()` | `asString()` | `asNumber()` | `asJson()` |
+|---|---|---|---|---|
+| `boolean` | the bool | `""` | `0` | `.empty` (`.object([:])`) |
+| `string` | `true` | the string | `0` | `.empty` |
+| `number` | `true` | `""` | the number | `.empty` |
+| `json` | `true` | `""` | `0` | the decoded value |
+
+**`asBool()` on a `json` flag returns `true` unconditionally**, the same as every other non-boolean type — it doesn't inspect the decoded value. Use `isEnabled()`, not `asBool()`, when you specifically mean "is this boolean flag on" — `isEnabled()` returns `false` outright for any non-boolean flag instead. A `json` flag whose decoded value isn't itself an object or array (a bare JSON scalar such as `5` or `"x"`, which the API allows but which real flags won't normally use) makes `asJson()` return `.empty` too — the same safe-zero-value behavior as calling it on a non-json flag, rather than wrapping the scalar or throwing.
+
+**Default values** passed to `single(key, defaultValue:)` or `DefaultsCollection` are typed from the Swift value itself: a Dictionary or Array default becomes a `json`-typed flag (not a stringified fallback), so `asJson()` on a missing flag with a Dictionary/Array default returns that value unchanged.
 
 ## Objective-C Support
 
@@ -190,7 +214,7 @@ Run the package tests with coverage enabled:
 swift test --enable-code-coverage
 ```
 
-The included suite covers configuration validation, `UserDefaults` cache behavior, rule evaluation, rollout bucketing, rule fetching, default handling, and Objective-C initialization.
+The included suite covers configuration validation, `UserDefaults` cache behavior, rule evaluation, rollout bucketing, rule fetching, default handling, json flag decoding and coercion, tolerating unrecognized flag types, and Objective-C initialization.
 
 ## Publishing
 

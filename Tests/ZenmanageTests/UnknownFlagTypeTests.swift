@@ -1,9 +1,10 @@
 import XCTest
 @testable import Zenmanage
 
-/// Covers ZEN-1667: before the API can serve json flags, this SDK must tolerate an
-/// unrecognized flag type/value in the rules payload instead of throwing away one flag
-/// or the whole payload.
+/// Covers ZEN-1667: this SDK must tolerate an unrecognized flag type/value in the rules
+/// payload instead of throwing away one flag or the whole payload. The fixture used here
+/// simulates a hypothetical future flag type (`"enum"`) that postdates this SDK release;
+/// `json` is a real, recognized type as of ZEN-1389 and is covered by `JsonFlagTypeTests`.
 final class UnknownFlagTypeTests: XCTestCase {
     // MARK: - Decoding
 
@@ -43,7 +44,7 @@ final class UnknownFlagTypeTests: XCTestCase {
         _ = try decoder.decode(RulesEnvelope.self, from: makeRulesResponseJSONWithUnknownFlag())
 
         XCTAssertEqual(logger.warnings.count, 1)
-        XCTAssertEqual(logger.warnings.first?.metadata?["type"], "json")
+        XCTAssertEqual(logger.warnings.first?.metadata?["type"], "enum")
     }
 
     // MARK: - End-to-end evaluation through FlagManager
