@@ -16,6 +16,9 @@ enum SimpleFlagsExample {
             let numberFlag = try await sdk.flags().single("example-number-flag", defaultValue: 42)
             print("Number flag: \(numberFlag.asNumber())")
 
+            let jsonFlag = try await sdk.flags().single("example-json-flag", defaultValue: ["retries": 3, "endpoints": ["a", "b"]])
+            print("JSON flag: \(jsonFlag.asJson())")
+
             let allFlags = try await sdk.flags().all()
             print("Fetched \(allFlags.count) flags")
         } catch {

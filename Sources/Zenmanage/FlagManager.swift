@@ -95,22 +95,34 @@ public final class FlagManager {
 
     /// Convenience overload for boolean defaults.
     public func single(_ key: String, defaultValue: Bool) async throws -> Flag {
-        try await single(key, defaultValue: .boolean(defaultValue))
+        // `FlagValue` is spelled out (rather than `.boolean(...)`) because `FlagValue` and
+        // `JSONValue` both have a `.boolean` case: with the `single(_:defaultValue:)`
+        // overload set including a `JSONValue` parameter, the bare shorthand is ambiguous
+        // and can silently resolve to the wrong enum.
+        try await single(key, defaultValue: FlagValue.boolean(defaultValue))
     }
 
     /// Convenience overload for string defaults.
     public func single(_ key: String, defaultValue: String) async throws -> Flag {
-        try await single(key, defaultValue: .string(defaultValue))
+        try await single(key, defaultValue: FlagValue.string(defaultValue))
     }
 
     /// Convenience overload for integer defaults.
     public func single(_ key: String, defaultValue: Int) async throws -> Flag {
-        try await single(key, defaultValue: .number(Double(defaultValue)))
+        try await single(key, defaultValue: FlagValue.number(Double(defaultValue)))
     }
 
     /// Convenience overload for double defaults.
     public func single(_ key: String, defaultValue: Double) async throws -> Flag {
-        try await single(key, defaultValue: .number(defaultValue))
+        try await single(key, defaultValue: FlagValue.number(defaultValue))
+    }
+
+    /// Convenience overload for json defaults (a `JSONValue.object` or `JSONValue.array`,
+    /// which also accept Swift dictionary/array literals directly via `ExpressibleBy...`
+    /// conformance). This synthesizes a `json`-typed flag rather than coercing the default
+    /// to a string.
+    public func single(_ key: String, defaultValue: JSONValue) async throws -> Flag {
+        try await single(key, defaultValue: FlagValue.json(defaultValue))
     }
 
     /// Returns a new flag manager with the supplied evaluation context.
@@ -246,6 +258,8 @@ public final class FlagManager {
             type = .string
         case .number:
             type = .number
+        case .json:
+            type = .json
         case .unknown:
             type = .unknown
         }

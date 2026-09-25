@@ -93,6 +93,31 @@ public final class ObjCFlag: NSObject {
     @objc public func asNumber() -> NSNumber {
         NSNumber(value: flag.asNumber())
     }
+
+    @objc public func asJson() -> Any {
+        flag.asJson().foundationValue
+    }
+}
+
+extension JSONValue {
+    /// Bridges to a Foundation object graph (`NSDictionary`/`NSArray`/`NSString`/`NSNumber`/
+    /// `NSNull`) suitable for passing across the Objective-C boundary.
+    var foundationValue: Any {
+        switch self {
+        case let .object(value):
+            return value.mapValues { $0.foundationValue } as NSDictionary
+        case let .array(value):
+            return value.map { $0.foundationValue } as NSArray
+        case let .string(value):
+            return value as NSString
+        case let .number(value):
+            return NSNumber(value: value)
+        case let .boolean(value):
+            return NSNumber(value: value)
+        case .null:
+            return NSNull()
+        }
+    }
 }
 
 /// Objective-C compatible flag manager wrapper.

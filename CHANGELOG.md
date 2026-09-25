@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for `json`-typed flags: `Flag.asJson()` returns the decoded value as a new `JSONValue` type (`.object`/`.array`/`.string`/`.number`/`.boolean`/`.null`), matching the "own type only, safe fallback otherwise" coercion behavior of `asBool()`/`asString()`/`asNumber()`. `JSONValue` conforms to `ExpressibleByDictionaryLiteral`/`ExpressibleByArrayLiteral`/etc. so Swift dictionary and array literals can be used directly. A Dictionary or Array default passed to `single(key, defaultValue:)` or `DefaultsCollection.set(_:json:)` now synthesizes a `json`-typed flag instead of being coerced to a string.
+
 ### Fixed
-- Flags with an unrecognized `type` (or an unrecognized value wrapper) no longer fail to decode. Previously, one flag of an unrecognized type could throw away the entire rules payload; now that flag is treated as unknown, logged once, and evaluates to the caller's default like a missing flag. This ships ahead of upcoming `json`-type flag support.
+- Flags with an unrecognized `type` (or an unrecognized value wrapper) no longer fail to decode. Previously, one flag of an unrecognized type could throw away the entire rules payload; now that flag is treated as unknown, logged once, and evaluates to the caller's default like a missing flag. This shipped ahead of `json`-type flag support above.
 
 ### Changed
 - Renamed request headers to use a consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-ZENMANAGE-CONTEXT` → `X-ZEN-CONTEXT`, and `X-DEFAULT-VALUE` → `X-ZEN-DEFAULT-VALUE`.
