@@ -24,7 +24,8 @@ public final class Zenmanage {
         enableUsageReporting: Bool = true,
         apiEndpoint: URL = URL(string: "https://api.zenmanage.com")!,
         logger: any ZenmanageLogger = NullLogger(),
-        urlSession: URLSession = .shared
+        urlSession: URLSession = .shared,
+        requestTimeout: TimeInterval = ZenmanageConfiguration.defaultRequestTimeout
     ) throws {
         let configuration = try ZenmanageConfiguration(
             environmentToken: environmentToken,
@@ -33,7 +34,8 @@ public final class Zenmanage {
             enableUsageReporting: enableUsageReporting,
             apiEndpoint: apiEndpoint,
             logger: logger,
-            urlSession: urlSession
+            urlSession: urlSession,
+            requestTimeout: requestTimeout
         )
 
         self.init(configuration: configuration)
