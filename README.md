@@ -39,7 +39,7 @@ Add the package in Xcode or `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/zenmanage/zenmanage-swift.git", from: "0.1.0")
+    .package(url: "https://github.com/zenmanage/zenmanage-swift.git", from: "1.0.0")
 ]
 ```
 
@@ -48,7 +48,7 @@ Then depend on the `Zenmanage` product.
 ### CocoaPods
 
 ```ruby
-pod 'Zenmanage', '~> 0.1'
+pod 'Zenmanage', '~> 1.0'
 ```
 
 ## Quick Start

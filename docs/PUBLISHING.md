@@ -1,122 +1,56 @@
-# Publishing Next Steps
+# Releasing
 
-This document covers the remaining work needed to publish the Swift SDK to the public package ecosystems.
+The SDK is distributed through Swift Package Manager (straight from the git tag) and CocoaPods Trunk. There is no automated publish workflow; a release is a PR, a tag, and a `pod trunk push`.
 
-## 1. Finalize Repository Metadata
+## Where the version lives
 
-- Move the contents of `zenmanage-swift/` into the dedicated public repository root if this folder will become its own repo.
-- Confirm the public repository URL and update these files if the final location changes:
-  - `README.md`
-  - `Zenmanage.podspec`
-  - `.github/workflows/ci.yml`
-- Add issue tracker, repository topics, and a short repository description on GitHub.
+The version appears in three places, and they must match. `ReleaseVersionTests` fails CI if they drift.
 
-## 2. Validate Release Artifacts Locally
+| Where | What |
+|---|---|
+| `Sources/Zenmanage/Version.swift` | `ZenmanageSDK.version`, sent to the API as `X-ZEN-CLIENT-AGENT: zenmanage-swift/<version>` |
+| `Zenmanage.podspec` | `spec.version` |
+| `CHANGELOG.md` | a dated `## [X.Y.Z] - YYYY-MM-DD` section |
 
-Run these commands before tagging a release:
+Also update the install examples in `README.md` when the major version changes.
 
-```bash
-swift test --enable-code-coverage
-swift package dump-package
-pod lib lint Zenmanage.podspec --allow-warnings
-```
+## Release steps
 
-If CocoaPods is not installed yet:
+1. **Prepare the release PR.** Bump the version in the three places above, move the `## [Unreleased]` entries under the new heading, and set its date. Platform minimums (`iOS 13`, `macOS 10.15`, `tvOS 13`, `watchOS 6`) live in both `Package.swift` and the podspec; keep them in sync.
+2. **Run the quality gates** locally before merging:
 
-```bash
-sudo gem install cocoapods
-```
+   ```bash
+   swift test --enable-code-coverage
+   xcodebuild -scheme ZenmanageSwift -destination 'generic/platform=iOS' build
+   pod lib lint Zenmanage.podspec --allow-warnings
+   ```
 
-## 3. Create The First Public Release
+   If CocoaPods isn't installed: `sudo gem install cocoapods`. Also run the shared integration parity suite (`sdks/debuggers/sdk-integration-tests/feature-parity-swift`) when evaluation behavior changed.
+3. **Merge to `main`**, then tag the merge commit. Swift Package Manager and CocoaPods both use a plain version tag with no `v` prefix:
 
-1. Set the package version consistently in:
-   - `CHANGELOG.md`
-   - `Zenmanage.podspec`
-   - Git tag name
-2. Commit the release changes.
-3. Create an annotated tag:
+   ```bash
+   git tag -a X.Y.Z -m "Release X.Y.Z"
+   git push origin X.Y.Z
+   ```
 
-```bash
-git tag -a 0.1.0 -m "Release 0.1.0"
-git push origin main --tags
-```
+   Swift Package Manager needs nothing more; the tag is the release. Never move or delete a published tag.
+4. **Publish to CocoaPods Trunk.** The tag must already be pushed:
 
-4. Create a GitHub release from that tag and paste the changelog notes.
+   ```bash
+   pod spec lint Zenmanage.podspec --allow-warnings
+   pod trunk push Zenmanage.podspec --allow-warnings
+   ```
 
-## 4. Publish For Swift Package Manager Consumers
+   Trunk sessions expire; re-authenticate with `pod trunk register <email> 'Zenmanage' --description='Zenmanage SDK maintainer'` if the push is rejected.
 
-Swift Package Manager distribution is already enabled by `Package.swift`.
+   **CocoaPods Trunk is scheduled to become read-only on 2 December 2026**, after which no new pods or versions can be published. Existing pods keep working, and apps can still use the package by git tag.
+5. **Create a GitHub Release** from the tag with the changelog entries as the body.
+6. **Verify** from a fresh iOS project: add `https://github.com/zenmanage/zenmanage-swift` at the new version (Swift Package Manager), and `pod 'Zenmanage', '~> X.Y'` followed by `pod install` (CocoaPods). Both must resolve and build.
 
-To make it consumable publicly:
+## One-time setup
 
-- Ensure the public GitHub repository is reachable without authentication.
-- Keep semver tags in place.
-- Test install from a fresh sample app using:
-
-```swift
-.package(url: "https://github.com/zenmanage/zenmanage-swift.git", from: "0.1.0")
-```
-
-Optional next steps:
-
-- Register the package with a private or public Swift package registry if you plan to distribute through registries in addition to Git tags.
-- Add DocC generation or hosted API docs if you want richer package documentation in Xcode.
-
-## 5. Publish To CocoaPods
-
-One-time setup:
-
-```bash
-pod trunk register you@example.com 'Your Name' --description='Zenmanage Swift SDK publishing'
-```
-
-Publish the tagged release:
-
-```bash
-pod trunk push Zenmanage.podspec
-```
-
-Recommended checks:
-
-- Run `pod spec lint Zenmanage.podspec --allow-warnings` in CI.
-- Confirm the Git tag in `spec.source` matches the release tag exactly.
-- Verify the pod appears on https://cocoapods.org after trunk propagation.
-
-## 6. Register With Swift Package Index
-
-Swift Package Index is not a package host, but it is the main public discovery surface for Swift packages.
-
-After the repository is public:
-
-1. Open https://swiftpackageindex.com/add-a-package
-2. Submit the GitHub repository URL
-3. Enable build and documentation compatibility reporting if available
-
-This improves discoverability for SwiftPM users and gives you public compatibility badges.
-
-## 7. Add Release Automation
-
-Recommended follow-up automation:
-
-- CI job to run `swift test --enable-code-coverage`
-- CI job to run `pod lib lint Zenmanage.podspec --allow-warnings`
-- Optional release workflow that creates GitHub releases from version tags
-- Optional Dependabot or Renovate configuration for CI upkeep
-
-## 8. Verify Objective-C Consumption
-
-Before the public launch, validate the bridge from a sample Objective-C app:
-
-- Install through SwiftPM or CocoaPods in an Objective-C iOS project
-- Import the module and initialize `ZMObjCZenmanage`
-- Fetch a flag using completion handlers
-- Confirm the generated Objective-C headers expose the bridge types as expected
-
-## 9. Documentation Follow-Ups
-
-Before announcing the package publicly, consider adding:
-
-- A migration guide when the first breaking change happens
-- A dedicated troubleshooting section for networking, caching, and key mismatches
-- A short architecture note describing local rule evaluation and rollout bucketing
-- Screenshots or short snippets showing SwiftUI and UIKit integration
+- **Repository:** public, with a description, homepage, and topics (`feature-flags`, `feature-toggles`, `feature-management`, `remote-config`, `zenmanage`, `ios`, `swift`).
+- **Branch protection on `main`:** require pull requests and the `test` and `ios` status checks from `.github/workflows/ci.yml`.
+- **CocoaPods Trunk:** register a maintainer session with `pod trunk register` and check it with `pod trunk me`.
+- **Swift Package Index:** after the repository is public, submit it at <https://swiftpackageindex.com/add-a-package>. It is a discovery surface, not a host.
+- **Objective-C:** before announcing, install the package in an Objective-C app, `@import Zenmanage;`, initialize `ZMObjCZenmanage`, and fetch a flag through the completion handler.

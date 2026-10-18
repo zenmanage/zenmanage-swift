@@ -42,6 +42,10 @@ swift test
 See `_docs/technical/sdks/SDK_INTEGRATION_PARITY_TEST_PLAN.md` in the workspace for the
 scenario list.
 
+## Releasing
+
+See [docs/PUBLISHING.md](docs/PUBLISHING.md). The version lives in `Sources/Zenmanage/Version.swift`, `Zenmanage.podspec` and `CHANGELOG.md`, and a test fails if they disagree.
+
 ## Pull Requests
 
 - Keep PRs focused and reviewable

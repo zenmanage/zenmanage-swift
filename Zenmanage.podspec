@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = 'Zenmanage'
-  spec.version      = '0.1.0'
+  spec.version      = '1.0.0'
   spec.summary      = 'Zenmanage feature flag SDK for iOS and Apple platform apps.'
   spec.description  = <<-DESC
 Zenmanage is a native Swift SDK for iOS apps that fetches rules once,

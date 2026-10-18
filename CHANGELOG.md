@@ -7,33 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-18
+
+First public release.
+
 ### Added
+- Native async/await API for fetching and evaluating flags: `Zenmanage`, `FlagManager` (`single`, `all`, `withContext`, `withDefaults`, `reportUsage`, `refreshRules`), `Context`, `Attribute`, and `DefaultsCollection`.
+- Local rule evaluation after a single rules fetch. Rules are evaluated from the lowest `position` to the highest and the first match wins; rules that share a position, or have none, keep the payload order.
+- Deterministic percentage rollouts using CRC32B bucketing.
+- `boolean`, `string`, `number` and `json` flags. `Flag.asJson()` returns the decoded value as a `JSONValue` (`.object`/`.array`/`.string`/`.number`/`.boolean`/`.null`), which conforms to the `ExpressibleBy...` literal protocols so Swift dictionary and array literals work directly. A Dictionary or Array default passed to `single(key, defaultValue:)` or `DefaultsCollection.set(_:json:)` produces a `json`-typed flag. Calling the "wrong" accessor never throws; each accessor falls back to a safe zero value, matching the cross-SDK coercion contract.
+- A flag with a `type` this release doesn't recognize no longer fails the whole rules payload. It is logged once and treated like a missing flag, falling back to your default.
+- `single()` falls back to the default you provided (or a `DefaultsCollection` entry) instead of throwing when the rules can't be loaded, e.g. an invalid key or no network. An explicit `refreshRules()` still surfaces its own failure.
+- Environment tokens must be a mobile key (`mob_...`) or a client key (`cli_...`). Server keys (`srv_...`) are rejected when the configuration is created: a server key bundled into an app can be extracted by anyone.
+- `UserDefaults`, in-memory, and null rule caches.
 - `ZenmanageConfiguration(requestTimeout:)` (and the matching `Zenmanage(environmentToken:requestTimeout:)` parameter) sets how long a request may wait for data before it fails. It defaults to 10 seconds, the same as the other Zenmanage SDKs; usage reports are capped at 5 seconds.
-- Objective-C bridge: `ZMObjCDefaultsCollection setJson:forKey:`, `NSDictionary` / `NSArray` defaults for `-[ZMObjCFlagManager single:defaultValue:context:completion:]` (json flags), and `-[ZMObjCFlagManager reportUsage:context:]`.
-- `examples/json-flags.swift`, `CONTRIBUTING.md`, and a Dependabot config for Swift packages and GitHub Actions.
-- CI now builds the package for iOS and fails below 90% line coverage.
-- Support for `json`-typed flags: `Flag.asJson()` returns the decoded value as a new `JSONValue` type (`.object`/`.array`/`.string`/`.number`/`.boolean`/`.null`), matching the "own type only, safe fallback otherwise" coercion behavior of `asBool()`/`asString()`/`asNumber()`. `JSONValue` conforms to `ExpressibleByDictionaryLiteral`/`ExpressibleByArrayLiteral`/etc. so Swift dictionary and array literals can be used directly. A Dictionary or Array default passed to `single(key, defaultValue:)` or `DefaultsCollection.set(_:json:)` now synthesizes a `json`-typed flag instead of being coerced to a string.
-
-### Fixed
-- Rules are now evaluated from the lowest `position` to the highest (rules sharing a position, or without one, keep the payload order), matching the PHP, Ruby, and Flutter SDKs. Previously they were evaluated in payload order, which isn't guaranteed to be `position` order.
-- `Flag.asString()` on a number flag no longer crashes when the value is too large for an `Int` (or is infinite).
-- `FlagManager.single()` now falls back to the caller-provided default (or a `DefaultsCollection` entry) instead of throwing when the rules fetch fails outright, e.g. an invalid or unreachable environment token. This mirrors the reference PHP SDK's behavior. An explicit `refreshRules()` call still surfaces its own failure.
-- Flags with an unrecognized `type` (or an unrecognized value wrapper) no longer fail to decode. Previously, one flag of an unrecognized type could throw away the entire rules payload; now that flag is treated as unknown, logged once, and evaluates to the caller's default like a missing flag. This shipped ahead of `json`-type flag support above.
-
-### Changed
-- Environment tokens must now be a mobile key (`mob_...`) or a client key (`cli_...`), matching the React Native SDK. Server keys (`srv_...`) are rejected when the configuration is created: a server key bundled into an app can be extracted by anyone. Client keys, previously rejected, are now accepted.
-- Requests now time out after 10 seconds (5 for usage reports) instead of waiting out `URLSession`'s 60 second default on each of the three attempts. Set `requestTimeout` to change it.
-- Renamed request headers to use a consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-ZENMANAGE-CONTEXT` → `X-ZEN-CONTEXT`, and `X-DEFAULT-VALUE` → `X-ZEN-DEFAULT-VALUE`.
-
-## [0.1.0] - 2026-05-08
-
-### Added
-- Initial public Swift SDK for Zenmanage mobile clients
-- Native async/await API for fetching and evaluating flags
-- Local rule evaluation matching the PHP and JavaScript SDK behavior
-- Deterministic percentage rollout support using CRC32B bucketing
-- `UserDefaults`, in-memory, and null cache backends
-- Objective-C bridge types for mixed-language iOS apps
-- Swift Package Manager and CocoaPods package definitions
-- Documentation, examples, CI workflow, and publishing guide
-- Test coverage for configuration, cache behavior, API fetching, usage reporting, rules, and rollouts
+- `ZenmanageSDK.version`, the version reported to the API in the `X-ZEN-CLIENT-AGENT` header.
+- Objective-C bridge types for mixed-language apps, including JSON defaults (`setJson:forKey:` and `NSDictionary`/`NSArray` defaults) and `reportUsage:context:`.
+- Swift Package Manager and CocoaPods package definitions, documentation, and examples (including `examples/json-flags.swift`).

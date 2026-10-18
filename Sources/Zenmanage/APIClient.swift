@@ -10,7 +10,6 @@ private struct MetadataEnvelope: Decodable {
 }
 
 final class APIClient {
-    private static let sdkVersion = "0.1.0"
     private static let defaultClientAgent = "zenmanage-swift"
     private static let maxRetries = 3
     private static let retryDelayNanoseconds: UInt64 = 100_000_000
@@ -120,7 +119,7 @@ final class APIClient {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(environmentToken, forHTTPHeaderField: "X-ZEN-API-KEY")
-        request.setValue("\(clientAgent)/\(Self.sdkVersion)", forHTTPHeaderField: "X-ZEN-CLIENT-AGENT")
+        request.setValue("\(clientAgent)/\(ZenmanageSDK.version)", forHTTPHeaderField: "X-ZEN-CLIENT-AGENT")
 
         if includeContentType {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
