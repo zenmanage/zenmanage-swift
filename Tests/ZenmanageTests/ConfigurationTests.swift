@@ -6,9 +6,37 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertNoThrow(try ZenmanageConfiguration(environmentToken: "mob_live_123"))
     }
 
-    func testRejectsNonMobileEnvironmentToken() {
-        XCTAssertThrowsError(try ZenmanageConfiguration(environmentToken: "cli_live_123")) { error in
-            XCTAssertEqual(error as? ZenmanageError, .configuration("Invalid environment token for iOS runtime. Use a mobile key (mob_...) or server key (srv_...)."))
+    func testAcceptsClientEnvironmentToken() throws {
+        XCTAssertNoThrow(try ZenmanageConfiguration(environmentToken: "cli_live_123"))
+    }
+
+    func testRejectsServerEnvironmentToken() {
+        XCTAssertThrowsError(try ZenmanageConfiguration(environmentToken: "srv_live_123")) { error in
+            XCTAssertEqual(
+                error as? ZenmanageError,
+                .configuration("Invalid environment token for iOS runtime: server key provided. Use a mobile key (mob_...) or client key (cli_...).")
+            )
+        }
+    }
+
+    func testRejectsEnvironmentTokenWithAnUnknownPrefix() {
+        XCTAssertThrowsError(try ZenmanageConfiguration(environmentToken: "live_123")) { error in
+            XCTAssertEqual(
+                error as? ZenmanageError,
+                .configuration("Invalid environment token for iOS runtime. Use a mobile key (mob_...) or client key (cli_...).")
+            )
+        }
+    }
+
+    func testRejectsAnEmptyEnvironmentToken() {
+        XCTAssertThrowsError(try ZenmanageConfiguration(environmentToken: "")) { error in
+            XCTAssertEqual(error as? ZenmanageError, .configuration("Environment token is required"))
+        }
+    }
+
+    func testRejectsANegativeCacheTTL() {
+        XCTAssertThrowsError(try ZenmanageConfiguration(environmentToken: "mob_live_123", cacheTTL: -1)) { error in
+            XCTAssertEqual(error as? ZenmanageError, .configuration("Cache TTL must be zero or greater"))
         }
     }
 

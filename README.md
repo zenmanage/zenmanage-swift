@@ -25,11 +25,11 @@ Add Zenmanage feature flags to iOS apps with a native Swift package that mirrors
 
 ## Key Compatibility
 
-This SDK is for mobile runtimes and is meant to be used with environment tokens prefixed with `mob_`.
+This SDK is for mobile runtimes and takes a mobile key or a client key.
 
 - `mob_...`: supported
-- `cli_...`: rejected when the configuration is created
-- `srv_...`: accepted by the client, but the Zenmanage API rejects server keys for this SDK's client agent
+- `cli_...`: supported
+- `srv_...`: rejected when the configuration is created. A server key grants server-side access and must never be bundled into an app, where anyone can extract it.
 
 ## Installation
 

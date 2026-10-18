@@ -363,9 +363,9 @@ final class ObjectiveCBridgeTests: XCTestCase {
         ))
     }
 
-    func testInitializerRejectsAnInvalidToken() {
+    func testInitializerRejectsAServerToken() {
         XCTAssertThrowsError(try ObjCZenmanage(
-            environmentToken: "cli_not_a_mobile_key",
+            environmentToken: "srv_not_for_an_app",
             cacheTTL: 60,
             enableUsageReporting: false,
             apiEndpoint: "https://api.zenmanage.com"

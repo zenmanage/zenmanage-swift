@@ -34,8 +34,13 @@ public final class ZenmanageConfiguration {
             throw ZenmanageError.configuration("Environment token is required")
         }
 
-        guard environmentToken.hasPrefix("mob_") || environmentToken.hasPrefix("srv_") else {
-            throw ZenmanageError.configuration("Invalid environment token for iOS runtime. Use a mobile key (mob_...) or server key (srv_...).")
+        // Server keys must never ship inside an app bundle, where anyone can extract them.
+        guard !environmentToken.hasPrefix("srv_") else {
+            throw ZenmanageError.configuration("Invalid environment token for iOS runtime: server key provided. Use a mobile key (mob_...) or client key (cli_...).")
+        }
+
+        guard environmentToken.hasPrefix("mob_") || environmentToken.hasPrefix("cli_") else {
+            throw ZenmanageError.configuration("Invalid environment token for iOS runtime. Use a mobile key (mob_...) or client key (cli_...).")
         }
 
         guard cacheTTL >= 0 else {

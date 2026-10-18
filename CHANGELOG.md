@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Flags with an unrecognized `type` (or an unrecognized value wrapper) no longer fail to decode. Previously, one flag of an unrecognized type could throw away the entire rules payload; now that flag is treated as unknown, logged once, and evaluates to the caller's default like a missing flag. This shipped ahead of `json`-type flag support above.
 
 ### Changed
+- Environment tokens must now be a mobile key (`mob_...`) or a client key (`cli_...`), matching the React Native SDK. Server keys (`srv_...`) are rejected when the configuration is created: a server key bundled into an app can be extracted by anyone. Client keys, previously rejected, are now accepted.
 - Requests now time out after 10 seconds (5 for usage reports) instead of waiting out `URLSession`'s 60 second default on each of the three attempts. Set `requestTimeout` to change it.
 - Renamed request headers to use a consistent `X-ZEN-` prefix: `X-API-Key` → `X-ZEN-API-KEY`, `X-ZENMANAGE-CONTEXT` → `X-ZEN-CONTEXT`, and `X-DEFAULT-VALUE` → `X-ZEN-DEFAULT-VALUE`.
 
