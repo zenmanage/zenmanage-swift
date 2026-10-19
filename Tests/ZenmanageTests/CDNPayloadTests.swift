@@ -4,8 +4,7 @@ import XCTest
 /// Covers the rules payload exactly as the Zenmanage CDN serves it: each rule carries a
 /// `criteria` object of `selector` / `selector_subtype` / `comparer` / `values`, rather than
 /// the `attribute` / `operator` / `value` clauses most of the other tests use. These are the
-/// shapes the integration parity suite exercises against the live API, kept here so a
-/// regression shows up offline.
+/// shapes the live API serves, kept here so a regression shows up offline.
 final class CDNPayloadTests: XCTestCase {
     override func tearDown() {
         URLProtocolMock.requestHandler = nil

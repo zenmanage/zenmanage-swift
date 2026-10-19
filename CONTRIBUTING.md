@@ -29,19 +29,6 @@ on the iOS SDK.
 - Keep the Objective-C bridge (`ObjectiveC.swift`) in step with the Swift API
 - Keep examples and README aligned with actual API behavior
 
-## Integration Parity
-
-Every Zenmanage SDK runs the same scenarios against a real environment. If you change
-evaluation behavior, run the Swift parity suite too:
-
-~~~bash
-cd ../debuggers/sdk-integration-tests/feature-parity-swift
-swift test
-~~~
-
-See `_docs/technical/sdks/SDK_INTEGRATION_PARITY_TEST_PLAN.md` in the workspace for the
-scenario list.
-
 ## Versioning
 
 The SDK version lives in `Sources/Zenmanage/Version.swift` (it is sent to the API in the client-agent header) and in a dated `## [X.Y.Z]` section of `CHANGELOG.md`. A test fails if they disagree.
