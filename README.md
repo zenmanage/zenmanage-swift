@@ -250,7 +250,3 @@ xcodebuild -scheme ZenmanageSwift -destination 'generic/platform=iOS' build
 The suite covers configuration validation and request timeouts, the `UserDefaults`, in-memory and null caches (including a cache that can't be read or written), rule evaluation against the payload shape the API serves, rule ordering by `position`, rollout bucketing, rule fetching, default handling, json flag decoding and coercion, tolerating unrecognized flag types, and the Objective-C bridge.
 
 Like every other Zenmanage SDK, this one also runs the shared integration parity suite against a real environment; see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Publishing
-
-See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the release procedure covering the version, tagging, the GitHub Release, and Swift Package Index registration.

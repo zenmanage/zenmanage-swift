@@ -42,9 +42,9 @@ swift test
 See `_docs/technical/sdks/SDK_INTEGRATION_PARITY_TEST_PLAN.md` in the workspace for the
 scenario list.
 
-## Releasing
+## Versioning
 
-See [docs/PUBLISHING.md](docs/PUBLISHING.md). The version lives in `Sources/Zenmanage/Version.swift` and `CHANGELOG.md`, and a test fails if they disagree.
+The SDK version lives in `Sources/Zenmanage/Version.swift` (it is sent to the API in the client-agent header) and in a dated `## [X.Y.Z]` section of `CHANGELOG.md`. A test fails if they disagree.
 
 ## Pull Requests
 
