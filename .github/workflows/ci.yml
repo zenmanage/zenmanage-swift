@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+env:
+  # Minimum line coverage, as a percentage, across Sources/. The Go SDK enforces 85.
+  COVERAGE_THRESHOLD: 90
+
 jobs:
   test:
     runs-on: macos-15
@@ -19,3 +23,33 @@ jobs:
 
       - name: Build And Test With Coverage
         run: swift test --enable-code-coverage
+
+      - name: Enforce Coverage Threshold
+        run: |
+          report="$(swift test --show-codecov-path)"
+          python3 - "$report" "$COVERAGE_THRESHOLD" <<'PY'
+          import json, sys
+
+          report, threshold = sys.argv[1], float(sys.argv[2])
+          covered = total = 0
+          for source in json.load(open(report))["data"][0]["files"]:
+              if "/Sources/" not in source["filename"]:
+                  continue
+              lines = source["summary"]["lines"]
+              covered += lines["covered"]
+              total += lines["count"]
+
+          percent = 100 * covered / total
+          print(f"Line coverage: {percent:.1f}% ({covered}/{total}), threshold {threshold:.0f}%")
+          sys.exit(0 if percent >= threshold else 1)
+          PY
+
+  ios:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build For iOS
+        run: xcodebuild -scheme ZenmanageSwift -destination 'generic/platform=iOS' build

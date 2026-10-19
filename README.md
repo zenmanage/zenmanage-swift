@@ -14,7 +14,7 @@ Add Zenmanage feature flags to iOS apps with a native Swift package that mirrors
 - `UserDefaults` cache by default, plus in-memory and null cache options
 - Async/await-friendly public API
 - Objective-C bridge for mixed-language apps
-- CocoaPods and Swift Package Manager support
+- Swift Package Manager support
 - Inline documentation, runnable examples, and a tested public API surface
 
 ## Requirements
@@ -25,11 +25,11 @@ Add Zenmanage feature flags to iOS apps with a native Swift package that mirrors
 
 ## Key Compatibility
 
-This SDK is for mobile runtimes and requires environment tokens prefixed with `mob_`.
+This SDK is for mobile runtimes and takes a mobile key or a client key.
 
 - `mob_...`: supported
-- `cli_...`: rejected
-- `srv_...`: rejected
+- `cli_...`: supported
+- `srv_...`: rejected when the configuration is created. A server key grants server-side access and must never be bundled into an app, where anyone can extract it.
 
 ## Installation
 
@@ -39,17 +39,11 @@ Add the package in Xcode or `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/zenmanage/zenmanage-swift.git", from: "0.1.0")
+    .package(url: "https://github.com/zenmanage/zenmanage-swift.git", from: "1.0.0")
 ]
 ```
 
 Then depend on the `Zenmanage` product.
-
-### CocoaPods
-
-```ruby
-pod 'Zenmanage', '~> 0.1'
-```
 
 ## Quick Start
 
@@ -76,11 +70,14 @@ let configuration = try ZenmanageConfiguration(
     environmentToken: "mob_your_mobile_key_here",
     cacheTTL: 3600,
     cache: UserDefaultsRuleCache(),
-    enableUsageReporting: true
+    enableUsageReporting: true,
+    requestTimeout: 10
 )
 
 let sdk = Zenmanage(configuration: configuration)
 ```
+
+`requestTimeout` is how long, in seconds, a request may wait for data before it fails (default `10`, the same as the other Zenmanage SDKs). Usage reports are capped at 5 seconds. A rules fetch makes up to three attempts, each with two requests (the rules location, then the rules file), after which `single()` falls back to your default value. In the worst case of a network that never answers that is about a minute at the default; lower `requestTimeout` if you'd rather give up sooner. Pass your own `urlSession` if you need proxy or certificate-pinning behavior.
 
 ### Cache Options
 
@@ -120,6 +117,8 @@ let flag = try await sdk.flags()
     .withContext(context)
     .single("premium-dashboard", defaultValue: false)
 ```
+
+Rules are evaluated from the lowest `position` to the highest and the first match wins, whatever order they arrive in.
 
 ## Percentage Rollouts
 
@@ -186,6 +185,31 @@ ZMObjCZenmanage *sdk = [[ZMObjCZenmanage alloc] initWithEnvironmentToken:@"mob_y
                                                                    error:nil];
 ```
 
+```objective-c
+ZMObjCContext *context = [[ZMObjCContext alloc] initWithType:@"user"
+                                                        name:nil
+                                                  identifier:@"user-123"
+                                                  attributes:@[
+    [[ZMObjCAttribute alloc] initWithKey:@"country" values:@[@"US"]]
+]];
+
+// Defaults can be a string, a number, a boolean, or an NSDictionary / NSArray for a json flag.
+[[sdk flags] single:@"advanced-config"
+       defaultValue:@{ @"retries": @3 }
+            context:context
+         completion:^(ZMObjCFlag *flag, NSError *error) {
+    if (flag != nil) {
+        NSDictionary *config = [flag asJson];
+        NSLog(@"retries: %@", config[@"retries"]);
+    }
+}];
+
+ZMObjCDefaultsCollection *defaults = [[ZMObjCDefaultsCollection alloc] init];
+[[defaults setBool:YES forKey:@"new-ui"] setJson:@[@"us", @"ca"] forKey:@"allowed-regions"];
+
+[[sdk flags] reportUsage:@"new-ui" context:context];
+```
+
 Primary bridge types:
 
 - `ZMObjCZenmanage`
@@ -194,6 +218,8 @@ Primary bridge types:
 - `ZMObjCAttribute`
 - `ZMObjCDefaultsCollection`
 - `ZMObjCFlag`
+
+`NSDictionary` and `NSArray` defaults (and `setJson:forKey:`) hold strings, numbers, booleans, `NSNull`, and nested dictionaries and arrays; anything else inside them is stored as `null`.
 
 ## Examples
 
@@ -204,6 +230,7 @@ The package includes the same example set used by the other Zenmanage SDKs, adap
 - [examples/caching.swift](examples/caching.swift)
 - [examples/context-based-flags.swift](examples/context-based-flags.swift)
 - [examples/defaults.swift](examples/defaults.swift)
+- [examples/json-flags.swift](examples/json-flags.swift)
 - [examples/percentage-rollouts.swift](examples/percentage-rollouts.swift)
 
 ## Testing
@@ -214,8 +241,10 @@ Run the package tests with coverage enabled:
 swift test --enable-code-coverage
 ```
 
-The included suite covers configuration validation, `UserDefaults` cache behavior, rule evaluation, rollout bucketing, rule fetching, default handling, json flag decoding and coercion, tolerating unrecognized flag types, and Objective-C initialization.
+CI fails below 90% line coverage and also builds the package for iOS, which `swift test` (macOS) can't catch:
 
-## Publishing
+```bash
+xcodebuild -scheme ZenmanageSwift -destination 'generic/platform=iOS' build
+```
 
-See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the release checklist covering GitHub, CocoaPods, Swift Package Manager distribution, and Swift Package Index registration.
+The suite covers configuration validation and request timeouts, the `UserDefaults`, in-memory and null caches (including a cache that can't be read or written), rule evaluation against the payload shape the API serves, rule ordering by `position`, rollout bucketing, rule fetching, default handling, json flag decoding and coercion, tolerating unrecognized flag types, and the Objective-C bridge.

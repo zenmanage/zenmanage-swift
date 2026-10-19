@@ -59,6 +59,17 @@ public final class ObjCDefaultsCollection: NSObject {
         defaults.set(key, number: value.doubleValue)
         return self
     }
+
+    /// Sets a `json` default from an `NSDictionary` or `NSArray`. Values nested inside it that
+    /// can't be represented in JSON (anything but strings, numbers, booleans, `NSNull`,
+    /// dictionaries, and arrays) are stored as `null`; any other top-level value is ignored.
+    @objc @discardableResult public func setJson(_ value: Any, forKey key: String) -> ObjCDefaultsCollection {
+        if value is NSDictionary || value is NSArray {
+            defaults.set(key, json: JSONValue(foundationValue: value))
+        }
+
+        return self
+    }
 }
 
 /// Objective-C compatible flag wrapper.
@@ -100,6 +111,32 @@ public final class ObjCFlag: NSObject {
 }
 
 extension JSONValue {
+    /// Builds a `JSONValue` from a Foundation object graph (`NSDictionary`/`NSArray`/
+    /// `NSString`/`NSNumber`/`NSNull`) received across the Objective-C boundary. Anything
+    /// that has no JSON representation becomes `.null`.
+    init(foundationValue value: Any) {
+        switch value {
+        case let value as NSDictionary:
+            var object: [String: JSONValue] = [:]
+
+            for (key, nested) in value {
+                if let key = key as? String {
+                    object[key] = JSONValue(foundationValue: nested)
+                }
+            }
+
+            self = .object(object)
+        case let value as NSArray:
+            self = .array(value.map { JSONValue(foundationValue: $0) })
+        case let value as NSString:
+            self = .string(value as String)
+        case let value as NSNumber:
+            self = CFGetTypeID(value) == CFBooleanGetTypeID() ? .boolean(value.boolValue) : .number(value.doubleValue)
+        default:
+            self = .null
+        }
+    }
+
     /// Bridges to a Foundation object graph (`NSDictionary`/`NSArray`/`NSString`/`NSNumber`/
     /// `NSNull`) suitable for passing across the Objective-C boundary.
     var foundationValue: Any {
@@ -136,6 +173,11 @@ public final class ObjCFlagManager: NSObject {
 
     @objc public func withDefaults(_ defaults: ObjCDefaultsCollection) -> ObjCFlagManager {
         ObjCFlagManager(manager: manager.withDefaults(defaults.defaults))
+    }
+
+    /// Reports usage of a flag. Fire-and-forget; honours `enableUsageReporting`.
+    @objc public func reportUsage(_ key: String, context: ObjCContext? = nil) {
+        manager.reportUsage(key, context: context?.context)
     }
 
     @objc public func refreshRulesWithCompletion(_ completion: @escaping (NSError?) -> Void) {
@@ -183,10 +225,14 @@ public final class ObjCFlagManager: NSObject {
                     } else {
                         flag = try await scopedManager.single(key, defaultValue: value.doubleValue)
                     }
+                case let value as NSDictionary:
+                    flag = try await scopedManager.single(key, defaultValue: JSONValue(foundationValue: value))
+                case let value as NSArray:
+                    flag = try await scopedManager.single(key, defaultValue: JSONValue(foundationValue: value))
                 case nil:
                     flag = try await scopedManager.single(key)
                 default:
-                    throw ZenmanageError.configuration("Objective-C defaults must be NSString or NSNumber")
+                    throw ZenmanageError.configuration("Objective-C defaults must be NSString, NSNumber, NSDictionary, or NSArray")
                 }
 
                 completion(ObjCFlag(flag: flag), nil)

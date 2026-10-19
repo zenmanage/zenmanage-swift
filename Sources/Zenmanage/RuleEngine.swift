@@ -42,14 +42,34 @@ struct RolloutBucketer {
 }
 
 final class RuleEngine {
+    /// Returns the first rule that matches the context, lowest `position` first.
+    ///
+    /// The rules payload isn't guaranteed to arrive in `position` order, so the engine
+    /// orders them itself, the same as the PHP, Ruby, and Flutter SDKs. Rules without a
+    /// `position` count as `0`, and rules that share a position keep their payload order.
     func evaluate(_ rules: [Rule], context: Context) -> Rule? {
-        for rule in rules {
+        for rule in Self.ordered(rules) {
             if evaluate(rule, context: context) {
                 return rule
             }
         }
 
         return nil
+    }
+
+    static func ordered(_ rules: [Rule]) -> [Rule] {
+        guard rules.count > 1, rules.contains(where: { $0.position != nil }) else {
+            return rules
+        }
+
+        return rules.enumerated()
+            .sorted { lhs, rhs in
+                let lhsPosition = lhs.element.position ?? 0
+                let rhsPosition = rhs.element.position ?? 0
+
+                return lhsPosition == rhsPosition ? lhs.offset < rhs.offset : lhsPosition < rhsPosition
+            }
+            .map(\.element)
     }
 
     private func evaluate(_ rule: Rule, context: Context) -> Bool {

@@ -246,7 +246,9 @@ public enum FlagValue: Hashable, Sendable, Codable {
         case let .string(value):
             return value
         case let .number(value):
-            if value.rounded() == value {
+            // `Int(value)` traps outside `Int`'s range (and for infinity/NaN), so whole numbers
+            // too large to be exact integers fall through to `String(value)` instead.
+            if value.rounded() == value, abs(value) < 1e15 {
                 return String(Int(value))
             }
             return String(value)

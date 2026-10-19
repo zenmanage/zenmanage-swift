@@ -10,7 +10,6 @@ private struct MetadataEnvelope: Decodable {
 }
 
 final class APIClient {
-    private static let sdkVersion = "0.1.0"
     private static let defaultClientAgent = "zenmanage-swift"
     private static let maxRetries = 3
     private static let retryDelayNanoseconds: UInt64 = 100_000_000
@@ -21,6 +20,7 @@ final class APIClient {
     private let logger: any ZenmanageLogger
     private let urlSession: URLSession
     private let clientAgent: String
+    private let requestTimeout: TimeInterval
     private let decoder = JSONDecoder()
 
     init(configuration: ZenmanageConfiguration) {
@@ -30,6 +30,7 @@ final class APIClient {
         logger = configuration.logger
         urlSession = configuration.urlSession
         clientAgent = configuration.clientAgent ?? Self.defaultClientAgent
+        requestTimeout = configuration.requestTimeout
         decoder.userInfo[.zenmanageLogger] = logger
     }
 
@@ -78,7 +79,7 @@ final class APIClient {
 
     private func sendUsage(key: String, context: Context?, defaultValue: FlagValue?) async throws {
         let url = apiEndpoint.appendingPathComponent("v1/flags/\(key)/usage")
-        var request = makeRequest(url: url)
+        var request = makeRequest(url: url, timeout: min(requestTimeout, ZenmanageConfiguration.usageReportTimeout))
         request.httpMethod = "POST"
 
         if let context, !context.isAnonymousWithoutData {
@@ -112,12 +113,13 @@ final class APIClient {
         return cdnURL
     }
 
-    private func makeRequest(url: URL, includeContentType: Bool = true) -> URLRequest {
+    private func makeRequest(url: URL, includeContentType: Bool = true, timeout: TimeInterval? = nil) -> URLRequest {
         var request = URLRequest(url: url)
+        request.timeoutInterval = timeout ?? requestTimeout
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(environmentToken, forHTTPHeaderField: "X-ZEN-API-KEY")
-        request.setValue("\(clientAgent)/\(Self.sdkVersion)", forHTTPHeaderField: "X-ZEN-CLIENT-AGENT")
+        request.setValue("\(clientAgent)/\(ZenmanageSDK.version)", forHTTPHeaderField: "X-ZEN-CLIENT-AGENT")
 
         if includeContentType {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
