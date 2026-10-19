@@ -23,4 +23,4 @@ First public release.
 - `ZenmanageConfiguration(requestTimeout:)` (and the matching `Zenmanage(environmentToken:requestTimeout:)` parameter) sets how long a request may wait for data before it fails. It defaults to 10 seconds, the same as the other Zenmanage SDKs; usage reports are capped at 5 seconds.
 - `ZenmanageSDK.version`, the version reported to the API in the `X-ZEN-CLIENT-AGENT` header.
 - Objective-C bridge types for mixed-language apps, including JSON defaults (`setJson:forKey:` and `NSDictionary`/`NSArray` defaults) and `reportUsage:context:`.
-- Swift Package Manager and CocoaPods package definitions, documentation, and examples (including `examples/json-flags.swift`).
+- Swift Package Manager distribution, documentation, and examples (including `examples/json-flags.swift`).

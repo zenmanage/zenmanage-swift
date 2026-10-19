@@ -14,7 +14,7 @@ Add Zenmanage feature flags to iOS apps with a native Swift package that mirrors
 - `UserDefaults` cache by default, plus in-memory and null cache options
 - Async/await-friendly public API
 - Objective-C bridge for mixed-language apps
-- CocoaPods and Swift Package Manager support
+- Swift Package Manager support
 - Inline documentation, runnable examples, and a tested public API surface
 
 ## Requirements
@@ -44,12 +44,6 @@ dependencies: [
 ```
 
 Then depend on the `Zenmanage` product.
-
-### CocoaPods
-
-```ruby
-pod 'Zenmanage', '~> 1.0'
-```
 
 ## Quick Start
 
@@ -259,4 +253,4 @@ Like every other Zenmanage SDK, this one also runs the shared integration parity
 
 ## Publishing
 
-See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the release checklist covering GitHub, CocoaPods, Swift Package Manager distribution, and Swift Package Index registration.
+See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the release procedure covering the version, tagging, the GitHub Release, and Swift Package Index registration.

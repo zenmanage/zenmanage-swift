@@ -44,7 +44,7 @@ scenario list.
 
 ## Releasing
 
-See [docs/PUBLISHING.md](docs/PUBLISHING.md). The version lives in `Sources/Zenmanage/Version.swift`, `Zenmanage.podspec` and `CHANGELOG.md`, and a test fails if they disagree.
+See [docs/PUBLISHING.md](docs/PUBLISHING.md). The version lives in `Sources/Zenmanage/Version.swift` and `CHANGELOG.md`, and a test fails if they disagree.
 
 ## Pull Requests
 

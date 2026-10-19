@@ -1,9 +1,9 @@
 import XCTest
 @testable import Zenmanage
 
-/// The version appears in three places: `ZenmanageSDK.version` (sent to the API),
-/// `Zenmanage.podspec`, and `CHANGELOG.md`. They used to be updated by hand and had no
-/// check, so the client agent header could report a version that was never released.
+/// The version appears in two places: `ZenmanageSDK.version` (sent to the API) and
+/// `CHANGELOG.md`. They used to be updated by hand and had no check, so the client agent
+/// header could report a version that was never released.
 final class ReleaseVersionTests: XCTestCase {
     override func tearDown() {
         URLProtocolMock.requestHandler = nil
@@ -29,15 +29,6 @@ final class ReleaseVersionTests: XCTestCase {
 
         XCTAssertEqual(parts.count, 3, ZenmanageSDK.version)
         XCTAssertTrue(parts.allSatisfy { Int($0) != nil }, ZenmanageSDK.version)
-    }
-
-    func testPodspecVersionMatchesTheSDKVersion() throws {
-        let podspec = try repositoryFile("Zenmanage.podspec")
-
-        XCTAssertTrue(
-            podspec.contains("spec.version      = '\(ZenmanageSDK.version)'"),
-            "Zenmanage.podspec's spec.version must be \(ZenmanageSDK.version)"
-        )
     }
 
     func testChangelogHasAReleasedSectionForTheSDKVersion() throws {
