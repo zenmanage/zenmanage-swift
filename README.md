@@ -1,8 +1,6 @@
 # Zenmanage Swift SDK
 
-[![Platform](https://img.shields.io/badge/platform-iOS%2013%2B-blue.svg)](https://developer.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/zenmanage/zenmanage-swift/actions/workflows/ci.yml/badge.svg)](https://github.com/zenmanage/zenmanage-swift/actions/workflows/ci.yml) [![Version](https://img.shields.io/github/v/release/zenmanage/zenmanage-swift)](https://github.com/zenmanage/zenmanage-swift/releases) [![License](https://img.shields.io/github/license/zenmanage/zenmanage-swift)](LICENSE) [![Platform](https://img.shields.io/badge/platform-iOS%2013%2B-blue.svg)](https://developer.apple.com/ios/) [![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org)
 
 Add Zenmanage feature flags to iOS apps with a native Swift package that mirrors the local-evaluation model used by the Zenmanage PHP and JavaScript SDKs.
 
