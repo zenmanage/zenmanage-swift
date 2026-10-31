@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-30
+
+### Changed
+
+- Maintenance release with no SDK behavior changes. Adds community health files and README badges, and updates the CI checkout action.
+
 ## [1.0.0] - 2026-10-18
 
 First public release.

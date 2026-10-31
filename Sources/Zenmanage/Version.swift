@@ -5,5 +5,5 @@ public enum ZenmanageSDK {
     ///
     /// Keep it in step with the released section of `CHANGELOG.md` when you cut a release;
     /// `ReleaseVersionTests` fails if they drift.
-    public static let version = "1.0.0"
+    public static let version = "1.0.1"
 }
