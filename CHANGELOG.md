@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pinned GitHub Actions to commit SHAs. No SDK behavior changes.
+
 ## [1.0.1] - 2026-10-30
 
 ### Changed
